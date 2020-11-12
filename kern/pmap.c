@@ -102,6 +102,17 @@ boot_alloc(uint32_t n)
 	// to a multiple of PGSIZE.
 	//
 	// LAB 2: Your code here.
+	result = nextfree;
+	
+	if (n == 0)
+		return result;
+	
+	if ((uintptr_t) nextfree + n > ROUNDUP((uintptr_t)0xffffffff, PGSIZE))
+		panic("boot_alloc: Allocate memory failed -- out of memory\n");
+	else{
+		nextfree = ROUNDUP((char *) nextfree + n, PGSIZE);
+		return result;
+	}
 
 	return NULL;
 }
@@ -123,7 +134,7 @@ mem_init(void)
 
 	// Find out how much memory the machine has (npages & npages_basemem).
 	i386_detect_memory();
-
+	
 	// Remove this line when you're ready to test this function.
 	panic("mem_init: This function is not finished\n");
 
