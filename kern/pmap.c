@@ -103,18 +103,16 @@ boot_alloc(uint32_t n)
 	//
 	// LAB 2: Your code here.
 	result = nextfree;
-	
-	if (n == 0)
-		return result;
-	
-	if ((uintptr_t) nextfree + n > ROUNDUP((uintptr_t)0xffffffff, PGSIZE))
-		panic("boot_alloc: Allocate memory failed -- out of memory\n");
-	else{
-		nextfree = ROUNDUP((char *) nextfree + n, PGSIZE);
-		return result;
+
+	if (n > 0){
+		if (ROUNDUP((uint64_t)0xffffffff, PGSIZE) - n < (uintptr_t) nextfree)
+			panic("boot_alloc: Allocate memory failed -- out of memory\n");
+		else{
+			nextfree = ROUNDUP((char *) nextfree + n, PGSIZE);
+		}
 	}
 
-	return NULL;
+	return result;
 }
 
 // Set up a two-level page table:
@@ -136,7 +134,7 @@ mem_init(void)
 	i386_detect_memory();
 	
 	// Remove this line when you're ready to test this function.
-	panic("mem_init: This function is not finished\n");
+	// panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
@@ -159,8 +157,10 @@ mem_init(void)
 	// array.  'npages' is the number of physical pages in memory.  Use memset
 	// to initialize all fields of each struct PageInfo to 0.
 	// Your code goes here:
+	pages = (struct PageInfo *) boot_alloc(npages * sizeof(struct PageInfo));
+	memset(pages, 0, npages * sizeof(struct PageInfo));
 
-
+	panic("mem_init: This function is not finished\n");
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
 	// up the list of free physical pages. Once we've done so, all further
