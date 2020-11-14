@@ -364,7 +364,19 @@ pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
 	// Fill this function in
-	return NULL;
+	pde_t pde = pgdir[PDX(va)];
+	if (pde & PTE_P){
+		pte_t *pgtable = (pte_t *) ROUNDDOWN(pde, PGSIZE);
+		return pgtable + PTX(va);
+	} else if (create == true){
+		struct PageInfo *pgtable = page_alloc(ALLOC_ZERO);
+		if (pgtable == NULL)
+			return NULL;
+
+		pgdir[PDX(va)] = (pde_t) (page2pa(pgtable) | PTE_P);
+		return (pte_t *) page2pa(pgtable) + PTX(va);
+	} else
+		return NULL;
 }
 
 //
@@ -382,6 +394,14 @@ static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
 {
 	// Fill this function in
+	uint32_t pte_cnt = size / PGSIZE;
+	pte_t *pte;
+	for (uint32_t cnt = 0; cnt < pte_cnt; ++cnt){
+		pte = pgdir_walk(pgdir, (char *)va + cnt * PGSIZE, true);
+		if (pte == NULL)
+			panic("boot_map_region: Get/Create PTE for 0x%08x failed\n", va + cnt * PGSIZE);
+		*pte = (pte_t) ((pa + cnt * PGSIZE) | perm | PTE_P);
+	}
 }
 
 //
