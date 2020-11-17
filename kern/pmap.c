@@ -167,8 +167,8 @@ mem_init(void)
 
 	check_page_free_list(1);
 	check_page_alloc();
-	panic("mem_init: This function is not finished\n");
 	check_page();
+	panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// Now we set up virtual memory
@@ -366,15 +366,16 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	// Fill this function in
 	pde_t pde = pgdir[PDX(va)];
 	if (pde & PTE_P){
-		pte_t *pgtable = (pte_t *) ROUNDDOWN(pde, PGSIZE);
+		pte_t *pgtable = (pte_t *) KADDR(ROUNDDOWN(pde, PGSIZE));
 		return pgtable + PTX(va);
 	} else if (create == true){
 		struct PageInfo *pgtable = page_alloc(ALLOC_ZERO);
 		if (pgtable == NULL)
 			return NULL;
+		pgtable->pp_ref += 1;
 
-		pgdir[PDX(va)] = (pde_t) (page2pa(pgtable) | PTE_P);
-		return (pte_t *) page2pa(pgtable) + PTX(va);
+		pgdir[PDX(va)] = (pde_t) page2pa(pgtable) | PTE_P | PTE_W | PTE_U;
+		return (pte_t *) page2kva(pgtable) + PTX(va);
 	} else
 		return NULL;
 }
@@ -433,7 +434,18 @@ int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
-	return 0;
+	pte_t *pte = pgdir_walk(pgdir, va, true);
+	if (pte != NULL){
+		// Increasement of pp_ref must precede the removal of page
+		// in case the physical page is freed erroneously.
+		pp->pp_ref++;
+		if (*pte & PTE_P)
+			page_remove(pgdir, va);
+		*pte = (pte_t) (page2pa(pp) | perm | PTE_P);
+		tlb_invalidate(pgdir, va);
+		return 0;
+	}
+	return -E_NO_MEM;
 }
 
 //
@@ -451,6 +463,12 @@ struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	// Fill this function in
+	pte_t *pte = pgdir_walk(pgdir, va, false);
+	if ((pte != NULL) && (*pte & PTE_P)){
+		if (pte_store)
+			*pte_store = pte;
+		return pa2page(*pte);
+	}
 	return NULL;
 }
 
@@ -473,6 +491,13 @@ void
 page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
+	pte_t *pte_store;
+	struct PageInfo *page = page_lookup(pgdir, va, &pte_store);
+	if (page != NULL){
+		page_decref(page);
+		*pte_store = *pte_store & ~PTE_P;
+		tlb_invalidate(pgdir, va);
+	}
 }
 
 //
