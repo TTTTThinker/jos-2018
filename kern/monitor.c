@@ -191,8 +191,11 @@ monitor(struct Trapframe *tf)
 
 	while (1) {
 		buf = readline("K> ");
-		if (buf != NULL)
+		if (buf != NULL) {
+			if (buf[0] == 'q' && (buf[1] == ' ' || buf[1] == '\0'))
+				break;
 			if (runcmd(buf, tf) < 0)
 				break;
+		}
 	}
 }

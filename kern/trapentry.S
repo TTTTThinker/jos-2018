@@ -46,25 +46,25 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-	TRAPHANDLER_NOEC(trap_handler_0, T_DIVIDE);
-	TRAPHANDLER_NOEC(trap_handler_1, T_DEBUG);
-	TRAPHANDLER_NOEC(trap_handler_2, T_NMI);
-	TRAPHANDLER_NOEC(trap_handler_3, T_BRKPT);
-	TRAPHANDLER_NOEC(trap_handler_4, T_OFLOW);
-	TRAPHANDLER_NOEC(trap_handler_5, T_BOUND);
-	TRAPHANDLER_NOEC(trap_handler_6, T_ILLOP);
-	TRAPHANDLER_NOEC(trap_handler_7, T_DEVICE);
-	TRAPHANDLER(trap_handler_8, T_DBLFLT);
+	TRAPHANDLER_NOEC(trap_entry_0, T_DIVIDE);
+	TRAPHANDLER_NOEC(trap_entry_1, T_DEBUG);
+	TRAPHANDLER_NOEC(trap_entry_2, T_NMI);
+	TRAPHANDLER_NOEC(trap_entry_3, T_BRKPT);
+	TRAPHANDLER_NOEC(trap_entry_4, T_OFLOW);
+	TRAPHANDLER_NOEC(trap_entry_5, T_BOUND);
+	TRAPHANDLER_NOEC(trap_entry_6, T_ILLOP);
+	TRAPHANDLER_NOEC(trap_entry_7, T_DEVICE);
+	TRAPHANDLER(trap_entry_8, T_DBLFLT);
 
-	TRAPHANDLER(trap_handler_10, T_TSS);
-	TRAPHANDLER(trap_handler_11, T_SEGNP);
-	TRAPHANDLER(trap_handler_12, T_STACK);
-	TRAPHANDLER(trap_handler_13, T_GPFLT);
-	TRAPHANDLER(trap_handler_14, T_PGFLT);
+	TRAPHANDLER(trap_entry_10, T_TSS);
+	TRAPHANDLER(trap_entry_11, T_SEGNP);
+	TRAPHANDLER(trap_entry_12, T_STACK);
+	TRAPHANDLER(trap_entry_13, T_GPFLT);
+	TRAPHANDLER(trap_entry_14, T_PGFLT);
 
-	TRAPHANDLER_NOEC(trap_handler_16, T_FPERR);
+	TRAPHANDLER_NOEC(trap_entry_16, T_FPERR);
 
-	TRAPHANDLER_NOEC(trap_handler_syscall, T_SYSCALL);
+	TRAPHANDLER_NOEC(trap_entry_syscall, T_SYSCALL);
 
 /*
  * Lab 3: Your code here for _alltraps
