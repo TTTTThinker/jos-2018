@@ -66,6 +66,9 @@
 
 	TRAPHANDLER_NOEC(trap_handler_syscall, T_SYSCALL);
 
+/*
+ * Lab 3: Your code here for _alltraps
+ */
 _alltraps:
 	pushl	%ds
 	pushl	%es
@@ -76,8 +79,3 @@ _alltraps:
 	popl	%ds
 	pushl	%esp
 	call	trap
-
-/*
- * Lab 3: Your code here for _alltraps
- */
-
