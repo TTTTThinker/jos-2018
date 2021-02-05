@@ -274,7 +274,8 @@ page_fault_handler(struct Trapframe *tf)
 	env_destroy(curenv);
 }
 
-void breakpoint_handler(struct Trapframe *tf)
+void 
+breakpoint_handler(struct Trapframe *tf)
 {
 	print_trapframe(tf);
 	monitor(NULL);
