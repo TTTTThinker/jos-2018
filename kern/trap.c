@@ -58,7 +58,8 @@ static const char *trapname(int trapno)
 	return "(unknown trap)";
 }
 
-void idt_setup(void)
+void 
+idt_setup(void)
 {
 	extern void trap_entry_0();
 	extern void trap_entry_1();
@@ -189,6 +190,16 @@ trap_dispatch(struct Trapframe *tf)
 		breakpoint_handler(tf);
 		return;
 	}
+	else if (tf->tf_trapno == T_SYSCALL) {
+		uint32_t syscall_num = tf->tf_regs.reg_eax;
+		uint32_t arg1 = tf->tf_regs.reg_edx;
+		uint32_t arg2 = tf->tf_regs.reg_ecx;
+		uint32_t arg3 = tf->tf_regs.reg_ebx;
+		uint32_t arg4 = tf->tf_regs.reg_edi;
+		uint32_t arg5 = tf->tf_regs.reg_esi;
+		tf->tf_regs.reg_eax = syscall(syscall_num, arg1, arg2, arg3, arg4, arg5);
+		return;
+	}
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
@@ -250,6 +261,8 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
+	if (!(tf->tf_cs & 3))
+		panic("Kernel fault va %08x ip %08x\n", fault_va, tf->tf_eip);
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.

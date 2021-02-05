@@ -556,6 +556,17 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
+	void *va_start_aligned = (void *)ROUNDDOWN(va, PGSIZE);
+	void *va_end_aligned = (void *)ROUNDUP(va + len, PGSIZE);
+	size_t page_num = (va_end_aligned - va_start_aligned) / PGSIZE;
+	for (int i = 0; i < page_num; ++i) {
+		pte_t *pte = pgdir_walk(env->env_pgdir, va_start_aligned + i * PGSIZE, false);
+		if (!pte || !( *pte & (perm | PTE_P) ) || \
+			((uintptr_t)va_start_aligned + i * PGSIZE > ULIM)) {
+			user_mem_check_addr = i ? (uintptr_t)va_start_aligned + i * PGSIZE : (uintptr_t)va;
+			return -E_FAULT;
+		}
+	}
 
 	return 0;
 }
