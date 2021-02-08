@@ -274,7 +274,10 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+	for (int i = 0; i < NCPU; ++i) {
+		uintptr_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+		boot_map_region(kern_pgdir, kstacktop_i - KSTKSIZE, KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_W);
+	}
 }
 
 // --------------------------------------------------------------
@@ -295,6 +298,10 @@ page_init(void)
 	// LAB 4:
 	// Change your code to mark the physical page at MPENTRY_PADDR
 	// as in use
+	extern uintptr_t mpentry_start;
+	extern uintptr_t mpentry_end;
+	size_t npages_mpentry = MPENTRY_PADDR / PGSIZE;
+	size_t npages_mpentry_end = (physaddr_t)(MPENTRY_PADDR + ROUNDUP(mpentry_end - mpentry_start, PGSIZE)) / PGSIZE;
 
 	// The example code here marks all physical pages as free.
 	// However this is not truly the case.  What memory is free?
@@ -316,15 +323,28 @@ page_init(void)
 	size_t i;
 
 	// Physical page 0 [0x0, PGSIZE) is preserved for real-mode IDT and BIOS structures.
-	// Base memory [PGSIZE, IOPHYSMEM) is free.
-	for (i = 1; i < npages_basemem; i++) {
+	
+	// Base memory [PGSIZE, MPENTRY_PADDR) is free.
+	for (i = 1; i < npages_mpentry; i++) {
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
 	}
 
+	// Multiprocessor entry code physical address:
+	// [MPENTRY_PADDR, ROUNDUP(MPENTRY_PADDR + mpentry_end - mpentry_start, PGSIZE)) should be preserved.
+	
+	// Base memory [ROUNDUP(MPENTRY_PADDR + mpentry_end - mpentry_start, PGSIZE), IOPHYSMEM) is free.
+	for (i = npages_mpentry_end; i < IOPHYSMEM / PGSIZE; i++) {
+		pages[i].pp_ref = 0;
+		pages[i].pp_link = page_free_list;
+		page_free_list = &pages[i];
+	}
+	
 	// I/O hole [IOPHYSMEM, EXTPHYSMEM) will never be allocated.
+	
 	// Extended memory [EXTPHYSMEM, PADDR(nextfree)) is using by kernel.
+	
 	// Extended memory [PADDR(nextfree), npages * PGSIZE) is free.
 	for (i = PADDR(boot_alloc(0)) / PGSIZE; i < npages; i++){
 		pages[i].pp_ref = 0;
@@ -598,7 +618,14 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	physaddr_t pa_aligned = ROUNDDOWN(pa, PGSIZE);
+	size_t size_aligned = ROUNDUP(pa + size, PGSIZE) - pa_aligned;
+	if (base + size_aligned > KERNBASE)
+		panic("mmio_map_region: MMIO overflow!\n");
+	boot_map_region(kern_pgdir, base, size_aligned, pa_aligned, PTE_PCD | PTE_PWT | PTE_W);
+	void *mmio_base = (void *) base;
+	base += size_aligned;
+	return mmio_base;
 }
 
 static uintptr_t user_mem_check_addr;
