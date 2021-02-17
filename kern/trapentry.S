@@ -4,6 +4,7 @@
 #include <inc/memlayout.h>
 #include <inc/trap.h>
 
+#include <kern/picirq.h>
 
 
 ###################################################################
@@ -55,16 +56,20 @@
 	TRAPHANDLER_NOEC(trap_entry_6, T_ILLOP);
 	TRAPHANDLER_NOEC(trap_entry_7, T_DEVICE);
 	TRAPHANDLER(trap_entry_8, T_DBLFLT);
-
 	TRAPHANDLER(trap_entry_10, T_TSS);
 	TRAPHANDLER(trap_entry_11, T_SEGNP);
 	TRAPHANDLER(trap_entry_12, T_STACK);
 	TRAPHANDLER(trap_entry_13, T_GPFLT);
 	TRAPHANDLER(trap_entry_14, T_PGFLT);
-
 	TRAPHANDLER_NOEC(trap_entry_16, T_FPERR);
 
 	TRAPHANDLER_NOEC(trap_entry_syscall, T_SYSCALL);
+
+	TRAPHANDLER_NOEC(irq_entry_0, (IRQ_OFFSET + IRQ_TIMER));
+	TRAPHANDLER_NOEC(irq_entry_1, (IRQ_OFFSET + IRQ_KBD));
+	TRAPHANDLER_NOEC(irq_entry_4, (IRQ_OFFSET + IRQ_SERIAL));
+	TRAPHANDLER_NOEC(irq_entry_7, (IRQ_OFFSET + IRQ_SPURIOUS));
+	TRAPHANDLER_NOEC(irq_entry_14, (IRQ_OFFSET + IRQ_IDE));
 
 /*
  * Lab 3: Your code here for _alltraps
