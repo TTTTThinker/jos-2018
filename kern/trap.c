@@ -85,6 +85,12 @@ idt_setup(void)
 	extern void trap_entry_16();
 	extern void trap_entry_syscall();
 
+	extern void irq_entry_0();
+	extern void irq_entry_1();
+	extern void irq_entry_4();
+	extern void irq_entry_7();
+	extern void irq_entry_14();
+
 	SETGATE(idt[0], 0, GD_KT, trap_entry_0, 0);
 	SETGATE(idt[1], 0, GD_KT, trap_entry_1, 0);
 	SETGATE(idt[2], 0, GD_KT, trap_entry_2, 0);
@@ -101,6 +107,12 @@ idt_setup(void)
 	SETGATE(idt[14], 0, GD_KT, trap_entry_14, 0);
 	SETGATE(idt[16], 0, GD_KT, trap_entry_16, 0);
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, trap_entry_syscall, 3);
+
+	SETGATE(idt[IRQ_OFFSET + IRQ_TIMER], 0, GD_KT, irq_entry_0, 0);
+	SETGATE(idt[IRQ_OFFSET + IRQ_KBD], 0, GD_KT, irq_entry_1, 0);
+	SETGATE(idt[IRQ_OFFSET + IRQ_SERIAL], 0, GD_KT, irq_entry_4, 0);
+	SETGATE(idt[IRQ_OFFSET + IRQ_SPURIOUS], 0, GD_KT, irq_entry_7, 0);
+	SETGATE(idt[IRQ_OFFSET + IRQ_IDE], 0, GD_KT, irq_entry_14, 0);
 }
 
 void
@@ -244,6 +256,10 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
+	if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER) {
+		lapic_eoi();
+		sched_yield();
+	}
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
@@ -270,8 +286,8 @@ trap(struct Trapframe *tf)
 
 	// Re-acqurie the big kernel lock if we were halted in
 	// sched_yield()
-	if (xchg(&thiscpu->cpu_status, CPU_STARTED) == CPU_HALTED)
-		lock_kernel();
+	if (xchg(&thiscpu->cpu_status, CPU_STARTED) == CPU_HALTED);
+//		lock_kernel();
 	// Check that interrupts are disabled.  If this assertion
 	// fails, DO NOT be tempted to fix it by inserting a "cli" in
 	// the interrupt path.
